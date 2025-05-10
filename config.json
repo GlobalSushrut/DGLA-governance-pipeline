@@ -1,0 +1,25 @@
+{
+  "server": {
+    "port": 8081,
+    "host": "0.0.0.0",
+    "read_timeout_sec": 30,
+    "write_timeout_sec": 30
+  },
+  "auth": {
+    "enabled": false,
+    "jwt_secret": "change-me-in-production",
+    "token_expiry_minutes": 60
+  },
+  "cache": {
+    "type": "memory",
+    "redis_host": "localhost",
+    "redis_port": 6379,
+    "redis_password": "",
+    "redis_db": 0
+  },
+  "log": {
+    "level": "info",
+    "format": "json",
+    "output_path": "stdout"
+  }
+}

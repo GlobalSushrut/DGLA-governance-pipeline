@@ -1,0 +1,120 @@
+version: '3.8'
+
+services:
+  dgla:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        VERSION: "1.0.0"
+        BUILD_DATE: "${BUILD_DATE:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}"
+        COMMIT_HASH: "${COMMIT_HASH:-$(git rev-parse --short HEAD)}"
+    container_name: dgla-governance
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      - DGLA_SERVER_PORT=8081
+      - DGLA_LOG_LEVEL=info
+      - DGLA_AUTH_ENABLED=true
+      - DGLA_AUTH_JWT_SECRET=${JWT_SECRET:-changeme_in_production}
+      - DGLA_CACHE_TYPE=redis
+      - DGLA_CACHE_REDIS_HOST=redis
+      - DGLA_CACHE_REDIS_PORT=6379
+      - DGLA_CACHE_REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - DGLA_CACHE_REDIS_DB=0
+    volumes:
+      - dgla_logs:/app/logs
+    depends_on:
+      - redis
+    networks:
+      - dgla-network
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/alive"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  redis:
+    image: redis:7-alpine
+    container_name: dgla-redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-} --appendonly yes
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - dgla-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: dgla-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    networks:
+      - dgla-network
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: dgla-grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      - dgla-network
+    depends_on:
+      - prometheus
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+
+networks:
+  dgla-network:
+    driver: bridge
+
+volumes:
+  dgla_logs:
+  redis_data:
+  prometheus_data:
+  grafana_data:
