@@ -213,3 +213,8 @@ See additional documentation files:
 - Integration with CI/CD pipelines
 - Distributed deployment for high availability
 - Support for additional cryptographic proof algorithms
+
+## License
+
+This project is licensed under a proprietary license that restricts use, modification, and distribution.
+Contact the repository owner for collaboration and consulting options.
