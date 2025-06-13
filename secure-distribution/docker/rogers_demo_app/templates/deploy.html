@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy - DGLA Secure Infrastructure</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DGLA" width="40" class="d-inline-block align-text-middle me-2">
+                DGLA Secure Infrastructure
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('mesh') }}">Mesh Network</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registry') }}">Docker Registry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('deploy') }}">Deploy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nanobond') }}">NanoBond Ledger</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kubernetes_status') }}">Kubernetes</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="m-0">Secure Image Deployment</h3>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-5">
+                        <form method="POST" action="{{ url_for('deploy') }}">
+                            <div class="card">
+                                <div class="card-header bg-light">
+                                    <h5 class="m-0">Deploy NanoBond™-Verified Image</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        <label for="image_name" class="form-label">Image Name</label>
+                                        <select class="form-select" id="image_name" name="image_name" required>
+                                            {% for image in images %}
+                                            <option value="{{ image.name }}">{{ image.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="image_tag" class="form-label">Image Tag</label>
+                                        <select class="form-select" id="image_tag" name="image_tag" required>
+                                            {% for image in images %}
+                                            <option value="{{ image.tag }}">{{ image.tag }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="cluster_id" class="form-label">Target Cluster</label>
+                                        <select class="form-select" id="cluster_id" name="cluster_id" required>
+                                            {% for cluster in clusters %}
+                                            <option value="{{ cluster.id }}">{{ cluster.id }} ({{ cluster.region }})</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="verify_signature" name="verify_signature" checked>
+                                        <label class="form-check-label" for="verify_signature">Verify NanoBond™ Signature</label>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="enforce_immutability" name="enforce_immutability" checked>
+                                        <label class="form-check-label" for="enforce_immutability">Enforce Immutability</label>
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary">Deploy Image</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="col-md-7">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Deployment Security Process</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <span class="badge rounded-pill bg-secondary">1</span>
+                                        </div>
+                                        <div>
+                                            <h6>NanoBond™ Signature Verification</h6>
+                                            <p class="mb-0">Validates the cryptographic signature of the image using the NanoBond™ ledger</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <span class="badge rounded-pill bg-secondary">2</span>
+                                        </div>
+                                        <div>
+                                            <h6>Secure Mesh Channel Establishment</h6>
+                                            <p class="mb-0">Creates a military-grade encrypted communication channel with the target cluster</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <span class="badge rounded-pill bg-secondary">3</span>
+                                        </div>
+                                        <div>
+                                            <h6>Immutability Enforcement</h6>
+                                            <p class="mb-0">Ensures the image cannot be modified during transit or at runtime</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <span class="badge rounded-pill bg-secondary">4</span>
+                                        </div>
+                                        <div>
+                                            <h6>Secure Deployment to Kubernetes</h6>
+                                            <p class="mb-0">Deploys the image with strict security settings and isolation</p>
+                                        </div>
+                                    </li>
+                                    <li class="list-group-item d-flex">
+                                        <div class="me-3">
+                                            <span class="badge rounded-pill bg-secondary">5</span>
+                                        </div>
+                                        <div>
+                                            <h6>NanoBond™ Ledger Recording</h6>
+                                            <p class="mb-0">Records the deployment transaction in the immutable ledger</p>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="m-0">Available Images</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Image Name</th>
+                                    <th>Tag</th>
+                                    <th>Status</th>
+                                    <th>Verification</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for image in images %}
+                                <tr>
+                                    <td>{{ image.name }}</td>
+                                    <td>{{ image.tag }}</td>
+                                    <td><span class="badge bg-success">Ready</span></td>
+                                    <td><span class="badge bg-success">NanoBond™ Verified</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary select-image-btn" 
+                                                data-name="{{ image.name }}" 
+                                                data-tag="{{ image.tag }}">
+                                            Select
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="m-0">Available Kubernetes Clusters</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Cluster ID</th>
+                                    <th>Region</th>
+                                    <th>Status</th>
+                                    <th>Node Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for cluster in clusters %}
+                                <tr>
+                                    <td>{{ cluster.id }}</td>
+                                    <td>{{ cluster.region }}</td>
+                                    <td><span class="badge bg-success">{{ cluster.status }}</span></td>
+                                    <td>{{ cluster.nodes if cluster.nodes is defined else 3 }}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary select-cluster-btn" 
+                                                data-id="{{ cluster.id }}">
+                                            Select
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">© 2025 DGLA Secure Infrastructure - Rogers Demo</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script>
+        document.querySelectorAll('.select-image-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const name = this.getAttribute('data-name');
+                const tag = this.getAttribute('data-tag');
+                document.getElementById('image_name').value = name;
+                document.getElementById('image_tag').value = tag;
+            });
+        });
+        
+        document.querySelectorAll('.select-cluster-btn').forEach(button => {
+            button.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                document.getElementById('cluster_id').value = id;
+            });
+        });
+    </script>
+</body>
+</html>

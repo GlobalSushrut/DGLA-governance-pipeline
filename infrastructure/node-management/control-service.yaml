@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rogers-5g-production-control-service
+  namespace: rogers-5g-production
+spec:
+  selector:
+    app: dgla-control-service
+  ports:
+  - port: 8585
+    targetPort: 8585
+    protocol: TCP
+    name: control
+  type: ClusterIP

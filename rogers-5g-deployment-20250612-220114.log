@@ -1,0 +1,24 @@
+
+[1;33mVerifying prerequisites...[0m
+
+[1;33mVerifying Python dependencies...[0m
+
+[1;33mVerifying DGLA CLI...[0m
+
+[1;33mVerifying Rogers 5G module integration...[0m
+[0;32m✓ Rogers 5G module available[0m
+
+[1;33mInitializing DGLA CLI with production configuration...[0m
+[2025-06-12 22:01:24] INFO: Initializing DGLA environment...
+Traceback (most recent call last):
+  File "./cli/dgla.py", line 404, in <module>
+    DglaCLI().main()
+  File "./cli/dgla.py", line 387, in main
+    self.init(args)
+  File "./cli/dgla.py", line 98, in init
+    run_cmd(f"kubectl create namespace {self.config['kubernetes']['namespace']} --dry-run=client -o yaml | kubectl apply -f -")
+  File "./cli/dgla.py", line 19, in run_cmd
+    return subprocess.run(cmd, shell=True, check=check, text=True, 
+  File "/usr/lib/python3.8/subprocess.py", line 516, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command 'kubectl create namespace rogers-5g-production --dry-run=client -o yaml | kubectl apply -f -' returned non-zero exit status 1.

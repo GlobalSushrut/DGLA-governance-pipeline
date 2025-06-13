@@ -1,0 +1,28 @@
+version: '3.3'
+
+services:
+  rogers-demo:
+    build:
+      context: ../../..  # Points to the root of the data-governance-pipeline directory
+      dockerfile: secure-distribution/docker/rogers_demo_app/Dockerfile.custom
+    container_name: rogers-demo
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - /tmp/rogers_demo:/app/upload_folder
+    networks:
+      - dgla-network
+    environment:
+      - FLASK_APP=app.py
+      - FLASK_ENV=development
+      - REDIS_HOST=dgla-redis
+      - REDIS_PORT=6379
+      - PROMETHEUS_URL=http://dgla-prometheus:9090
+      - GRAFANA_URL=http://dgla-grafana:3000
+
+# Use the existing network for proper integration
+networks:
+  dgla-network:
+    external:
+      name: data-governance-pipeline_dgla-network

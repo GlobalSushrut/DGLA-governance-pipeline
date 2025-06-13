@@ -1,0 +1,46 @@
+apiVersion: dgla.io/v1
+kind: SLADefinition
+metadata:
+  name: customer-sla-template
+  namespace: rogers-5g-production
+spec:
+  customerConfig:
+    # This is a template that customers can customize
+    enabled: true
+    allowCustomMetrics: true
+    
+  # Allow customers to define their own SLA tiers
+  serviceLevelTemplate:
+    name: "custom"
+    customMetrics:
+      - name: "response_time_ms"
+        threshold: "500"
+        violationPenalty: "2% monthly fee per 10ms over threshold"
+      - name: "uptime_percentage"
+        threshold: "99.9"
+        violationPenalty: "5% monthly fee per 0.1% below threshold"
+      - name: "data_sovereignty"
+        threshold: "yes"
+        violationPenalty: "50% monthly fee + remediation costs"
+        
+  # Rules for integrating with monitoring
+  alertIntegration:
+    enableCustomRules: true
+    alertManagerEndpoint: "http://dgla-alertmanager:9093"
+    
+  # Cryptographic verification of SLA compliance
+  cryptographicVerification:
+    enabled: true
+    merkleTreeStorage: true
+    proofGenerationFrequency: "hourly"
+    
+  # Customizable notification channels
+  notificationChannels:
+    - type: "email"
+      configurable: true
+    - type: "slack"
+      configurable: true
+    - type: "webhook"
+      configurable: true
+    - type: "pagerduty"
+      configurable: true

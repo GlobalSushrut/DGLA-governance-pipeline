@@ -1,0 +1,71 @@
+apiVersion: dgla.io/v1
+kind: SLADefinition
+metadata:
+  name: healthcare-customer-sla
+  namespace: customer-healthcare-prod
+spec:
+  customerConfig:
+    enabled: true
+    allowCustomMetrics: true
+    customerName: "Medical Systems International"
+    customerID: "MSI-78901"
+    contractID: "DGLA-MSI-2025-07"
+    
+  # Healthcare industry specific SLA requirements
+  serviceLevelTemplate:
+    name: "healthcare-hipaa-compliant"
+    customMetrics:
+      - name: "response_time_ms"
+        threshold: 200  # Response time for patient data
+        violationPenalty: "3% monthly fee per 10ms over threshold"
+      - name: "uptime_percentage"
+        threshold: 99.95  # High availability for healthcare systems
+        violationPenalty: "5% monthly fee per 0.1% below threshold"
+      - name: "data_sovereignty"
+        threshold: true
+        violationPenalty: "100% monthly fee + HIPAA penalties"
+      - name: "patient_data_integrity"
+        threshold: 100  # Custom metric for patient data integrity
+        violationPenalty: "50% monthly fee for each integrity failure"
+      - name: "phi_encryption"
+        threshold: true
+        violationPenalty: "Breach of contract + regulatory penalties"
+        
+  # Custom alert rules for healthcare data
+  alertIntegration:
+    enableCustomRules: true
+    alertManagerEndpoint: "http://dgla-alertmanager:9093"
+    customRules:
+      - name: "PatientDataAccessFailure"
+        query: "dgla_access_authorization_failures{customer_id=\"MSI-78901\",data_type=\"PHI\"} > 0"
+        for: "30s"
+        severity: "critical"
+      - name: "HealthcareSystemLatency"
+        query: "histogram_quantile(0.95, sum(rate(dgla_api_response_time_bucket{customer_id=\"MSI-78901\",endpoint=\"/patient/records\"}[5m])) by (le)) > 0.2"
+        for: "1m"
+        severity: "critical"
+    
+  # Enhanced cryptographic verification for patient data
+  cryptographicVerification:
+    enabled: true
+    merkleTreeStorage: true
+    proofGenerationFrequency: "perRecord"
+    retentionPeriod: "10y"  # Healthcare regulation requirement
+    verificationAlgorithm: "post-quantum-resistant"
+    auditFrequency: "hourly"
+    
+  # Healthcare specific notification requirements
+  notificationChannels:
+    - type: "secureEmail"
+      recipients: ["privacy@medical-systems.com", "hipaa-compliance@medical-systems.com"]
+      encryptionEnabled: true
+    - type: "pagerduty"
+      serviceKey: "${SECRET:msi-pagerduty-key}"
+      escalationPolicy: "healthcare-critical"
+    - type: "webhook"
+      endpoint: "https://msi-monitoring.example.com/dgla-alerts"
+      authHeader: "${SECRET:msi-webhook-auth}"
+    - type: "regulatoryAPI"
+      endpoint: "https://healthcare-authority.gov/api/hipaa-reporting"
+      apiKey: "${SECRET:hipaa-api-key}"
+      reportingRequirement: "24h"

@@ -1,0 +1,171 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: dgla-secure-mesh-installation
+  namespace: istio-system
+spec:
+  profile: default
+  components:
+    # Enable all core components with security focus
+    base:
+      enabled: true
+    pilot:
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 500m
+            memory: 2048Mi
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        hpaSpec:
+          maxReplicas: 5
+          minReplicas: 2
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        service:
+          ports:
+          - name: status-port
+            port: 15021
+            targetPort: 15021
+          - name: http2
+            port: 80
+            targetPort: 8080
+          - name: https
+            port: 443
+            targetPort: 8443
+          - name: tcp
+            port: 31400
+            targetPort: 31400
+          - name: tls
+            port: 15443
+            targetPort: 15443
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+      k8s:
+        hpaSpec:
+          maxReplicas: 5
+          minReplicas: 2
+        resources:
+          requests:
+            cpu: 200m
+            memory: 256Mi
+  # Military-grade security settings
+  values:
+    global:
+      mtls:
+        enabled: true
+        auto: false  # Explicitly disabled to force strict mTLS
+      pilotCertProvider: istiod
+      jwtPolicy: third-party-jwt
+      proxy:
+        privileged: false
+        # Military-grade security requires upgrading all communications
+        holdApplicationUntilProxyStarts: true
+        resources:
+          requests:
+            cpu: 100m
+            memory: 128Mi
+      sds:
+        token:
+          aud: istio-ca
+      # Mesh network settings
+      meshID: dgla-mesh
+      multiCluster:
+        clusterName: ""
+        enabled: true
+      network: ""
+    telemetry:
+      enabled: true
+      v2:
+        enabled: true
+        prometheus:
+          enabled: true
+    # Enforce strict security
+    security:
+      enableNamespacesByDefault: false
+      selfSigned: true
+      # Short-lived certificates with automatic rotation
+      workloadCertTTL: "24h"
+      
+    pilot:
+      env:
+        PILOT_CERT_PROVIDER: istiod
+        # Enable security features
+        PILOT_ENABLE_PROTOCOL_SNIFFING_FOR_OUTBOUND: true
+        PILOT_ENABLE_PROTOCOL_SNIFFING_FOR_INBOUND: true
+        PILOT_ENABLE_ANALYSIS: true
+      
+    sidecarInjectorWebhook:
+      rewriteAppHTTPProbe: true
+      # Automatically inject into all eligible namespaces
+      enableNamespacesByDefault: true
+      
+---
+# PeerAuthentication policy to enforce mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: strict-mtls
+  namespace: istio-system
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# Default AuthorizationPolicy to deny all communication
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: deny-all
+  namespace: istio-system
+spec:
+  {}  # Empty spec means deny-all
+
+---
+# Authorization policy to allow istio control plane communication
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: istio-system
+  namespace: istio-system
+spec:
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["istio-system"]
+
+---
+# Network policy to enforce namespace isolation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Military-grade security configuration for DGLA customer clusters
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dgla-mesh-security-config
+  namespace: istio-system
+data:
+  security-level: "military-grade"
+  istio-version: "1.17.0"
+  mTLS-enforcement: "strict"
+  authorization-mode: "default-deny"
+  network-isolation: "namespace-level"
+  certificate-rotation: "24h"
+  observability: "enabled"
+  deployment-version: "1.0.0"

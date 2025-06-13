@@ -1,0 +1,211 @@
+apiVersion: install.istio.io/v1alpha1
+kind: IstioOperator
+metadata:
+  name: dgla-secure-mesh
+  namespace: dgla-system
+spec:
+  profile: default
+  components:
+    base:
+      enabled: true
+    pilot:
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 200m
+            memory: 512Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+    egressGateways:
+    - name: istio-egressgateway
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+    ingressGateways:
+    - name: istio-ingressgateway
+      enabled: true
+      k8s:
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 200m
+            memory: 512Mi
+  values:
+    global:
+      mtls:
+        enabled: true
+      proxy:
+        autoInject: enabled
+      useMCP: true
+    meshConfig:
+      accessLogFile: "/dev/stdout"
+      enableTracing: true
+      defaultConfig:
+        tracing:
+          sampling: 100
+---
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: dgla-mtls-strict
+  namespace: dgla-system
+spec:
+  mtls:
+    mode: STRICT
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: dgla-gateway
+  namespace: dgla-system
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: dgla-gateway-cert
+    hosts:
+    - "*"
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: dgla-server
+  namespace: dgla-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - dgla-gateway
+  http:
+  - match:
+    - uri:
+        prefix: /api/v1
+    route:
+    - destination:
+        host: dgla-deployment-server
+        port:
+          number: 8080
+---
+# Service entry for customer clusters
+apiVersion: networking.istio.io/v1alpha3
+kind: ServiceEntry
+metadata:
+  name: customer-clusters
+  namespace: dgla-system
+spec:
+  hosts:
+  - "*.customer-cluster.dgla.io"
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: DNS
+  location: MESH_EXTERNAL
+---
+# Authorization policy for secure API access
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: dgla-api-authz
+  namespace: dgla-system
+spec:
+  selector:
+    matchLabels:
+      app: dgla-deployment-server
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["dgla-system"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/v1/*"]
+  - from:
+    - source:
+        principals: ["cluster.local/ns/*/sa/dgla-client"]
+    to:
+    - operation:
+        methods: ["POST"]
+        paths: ["/api/v1/deploy"]
+---
+# Destination rule for egress traffic to customer clusters
+apiVersion: networking.istio.io/v1alpha3
+kind: DestinationRule
+metadata:
+  name: customer-clusters
+  namespace: dgla-system
+spec:
+  host: "*.customer-cluster.dgla.io"
+  trafficPolicy:
+    tls:
+      mode: MUTUAL
+      clientCertificate: /etc/istio/certs/client.pem
+      privateKey: /etc/istio/certs/key.pem
+      caCertificates: /etc/istio/certs/ca.pem
+---
+# Sidecar configuration to limit egress traffic
+apiVersion: networking.istio.io/v1alpha3
+kind: Sidecar
+metadata:
+  name: dgla-restricted-egress
+  namespace: dgla-system
+spec:
+  workloadSelector:
+    labels:
+      app: dgla-deployment-server
+  egress:
+  - hosts:
+    - "./dgla-deployment-server.dgla-system.svc.cluster.local"
+    - "dgla-system/*"
+    - "istio-system/*"
+---
+# Network policy to further restrict pod traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: dgla-secure-network
+  namespace: dgla-system
+spec:
+  podSelector:
+    matchLabels:
+      app: dgla-deployment-server
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          istio-injection: enabled
+    ports:
+    - protocol: TCP
+      port: 8080
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 53
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: dgla-system

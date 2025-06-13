@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesh Network - DGLA Secure Infrastructure</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DGLA" width="40" class="d-inline-block align-text-middle me-2">
+                DGLA Secure Infrastructure
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('mesh') }}">Mesh Network</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registry') }}">Docker Registry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('deploy') }}">Deploy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nanobond') }}">NanoBond Ledger</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kubernetes_status') }}">Kubernetes</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header bg-warning text-dark d-flex justify-content-between align-items-center">
+                <h3 class="m-0">Secure Mesh Network</h3>
+                <span class="badge bg-success">Connected</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="alert alert-warning" role="alert">
+                            <h4 class="alert-heading">Military-Grade Secure Communication</h4>
+                            <p>Your mesh network provides encrypted communication between all components with strict mTLS enforcement.</p>
+                            <hr>
+                            <p class="mb-0">Node ID: <strong>{{ node_id }}</strong> | Customer: <strong>{{ customer_id }}</strong> | Region: <strong>{{ region }}</strong></p>
+                        </div>
+                        
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Add Server to Mesh</h5>
+                            </div>
+                            <div class="card-body">
+                                <form method="POST" action="{{ url_for('add_server') }}">
+                                    <div class="mb-3">
+                                        <label for="server_id" class="form-label">Server ID</label>
+                                        <input type="text" class="form-control" id="server_id" name="server_id" required>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="server_url" class="form-label">Server URL</label>
+                                        <input type="text" class="form-control" id="server_url" name="server_url" required>
+                                    </div>
+                                    <button type="submit" class="btn btn-primary">Add Server</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Mesh Security Features</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="mtls" checked disabled>
+                                            <label class="form-check-label" for="mtls">mTLS Encryption (4096-bit)</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="authPolicy" checked disabled>
+                                            <label class="form-check-label" for="authPolicy">Authorization Policies</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="networkIsolation" checked disabled>
+                                            <label class="form-check-label" for="networkIsolation">Network Isolation</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="rbac" checked disabled>
+                                            <label class="form-check-label" for="rbac">Role-Based Access Control</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="nanobondIntegration" checked disabled>
+                                            <label class="form-check-label" for="nanobondIntegration">NanoBond™ Integration</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="telemetry" checked disabled>
+                                            <label class="form-check-label" for="telemetry">Encrypted Telemetry</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="m-0">Mesh Network Servers</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if mesh_servers %}
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Server ID</th>
+                                    <th>URL</th>
+                                    <th>Status</th>
+                                    <th>Security</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for server in mesh_servers %}
+                                <tr>
+                                    <td>{{ server }}</td>
+                                    <td><code>https://{{ server }}.mesh.example.com</code></td>
+                                    <td><span class="badge bg-success">Connected</span></td>
+                                    <td><span class="badge bg-primary">Military Grade</span></td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary">View Details</button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                        {% else %}
+                        <div class="alert alert-info mb-0">
+                            <p class="mb-0">No servers have been added to your mesh network. Add a server to get started.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Network Topology</h5>
+                            </div>
+                            <div class="card-body">
+                                <div id="network-topology" class="topology-container">
+                                    <div class="text-center py-5">
+                                        <div class="topology-diagram">
+                                            <div class="node registry-node">
+                                                <div class="node-icon">🔒</div>
+                                                <div class="node-label">Registry</div>
+                                            </div>
+                                            <div class="node-connection"></div>
+                                            <div class="node mesh-node">
+                                                <div class="node-icon">🌐</div>
+                                                <div class="node-label">Mesh</div>
+                                            </div>
+                                            <div class="node-connection"></div>
+                                            <div class="node k8s-node">
+                                                <div class="node-icon">⚙️</div>
+                                                <div class="node-label">Kubernetes</div>
+                                            </div>
+                                        </div>
+                                        <div class="mt-3 text-muted">All connections secured with 4096-bit RSA encryption and mTLS</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Recent Network Activity</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Secure Connection Established</h6>
+                                            <small>Just now</small>
+                                        </div>
+                                        <p class="mb-1">Registry connected to mesh network</p>
+                                        <small>mTLS verified with 4096-bit certificate</small>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Image Deployment</h6>
+                                            <small>10 minutes ago</small>
+                                        </div>
+                                        <p class="mb-1">{{ customer_id or 'rogers' }}/secure-app:1.0.0</p>
+                                        <small>Secure deployment with NanoBond™ verification</small>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Configuration Update</h6>
+                                            <small>30 minutes ago</small>
+                                        </div>
+                                        <p class="mb-1">Authorization policies updated</p>
+                                        <small>Applied to all mesh endpoints</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">© 2025 DGLA Secure Infrastructure - Rogers Demo</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</body>
+</html>

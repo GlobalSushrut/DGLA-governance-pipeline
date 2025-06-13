@@ -1,0 +1,151 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ${CUSTOMER_ID}-system
+  labels:
+    dgla/customer: ${CUSTOMER_ID}
+    istio-injection: enabled
+    security-level: military-grade
+
+---
+# Service Account for customer namespace with restricted permissions
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ${CUSTOMER_ID}-operator
+  namespace: ${CUSTOMER_ID}-system
+
+---
+# Role for customer operator with limited permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: ${CUSTOMER_ID}-operator
+  namespace: ${CUSTOMER_ID}-system
+rules:
+- apiGroups: [""]
+  resources: ["pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["apps"]
+  resources: ["deployments", "statefulsets", "replicasets"]
+  verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+- apiGroups: ["networking.istio.io"]
+  resources: ["virtualservices", "destinationrules", "serviceentries"]
+  verbs: ["get", "list", "watch", "create", "update"]
+
+---
+# Role binding for customer operator
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: ${CUSTOMER_ID}-operator-binding
+  namespace: ${CUSTOMER_ID}-system
+subjects:
+- kind: ServiceAccount
+  name: ${CUSTOMER_ID}-operator
+  namespace: ${CUSTOMER_ID}-system
+roleRef:
+  kind: Role
+  name: ${CUSTOMER_ID}-operator
+  apiGroup: rbac.authorization.k8s.io
+
+---
+# Network policy to isolate customer namespace
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: ${CUSTOMER_ID}-isolation
+  namespace: ${CUSTOMER_ID}-system
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          dgla/customer: ${CUSTOMER_ID}
+    - namespaceSelector:
+        matchLabels:
+          istio-system: "true"
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          dgla/customer: ${CUSTOMER_ID}
+    - namespaceSelector:
+        matchLabels:
+          istio-system: "true"
+
+---
+# Istio Authorization Policy for secure API access
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: ${CUSTOMER_ID}-api-authorization
+  namespace: ${CUSTOMER_ID}-system
+spec:
+  selector:
+    matchLabels:
+      app: dgla-api
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["${CUSTOMER_ID}-system"]
+        principals: ["cluster.local/ns/${CUSTOMER_ID}-system/sa/${CUSTOMER_ID}-operator"]
+    to:
+    - operation:
+        methods: ["GET", "POST"]
+        paths: ["/api/v1/*"]
+
+---
+# Destination rule to enforce mTLS
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: ${CUSTOMER_ID}-mtls
+  namespace: ${CUSTOMER_ID}-system
+spec:
+  host: "*.${CUSTOMER_ID}-system.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+
+---
+# Service entry for mesh communication
+apiVersion: networking.istio.io/v1beta1
+kind: ServiceEntry
+metadata:
+  name: ${CUSTOMER_ID}-mesh-gateway
+  namespace: ${CUSTOMER_ID}-system
+spec:
+  hosts:
+  - "${CLUSTER_ID}.mesh.dgla.secure"
+  location: MESH_EXTERNAL
+  ports:
+  - number: 443
+    name: https
+    protocol: HTTPS
+  resolution: DNS
+  endpoints:
+  - address: "${MESH_GATEWAY_ADDRESS}"
+
+---
+# ConfigMap for customer-specific settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${CUSTOMER_ID}-config
+  namespace: ${CUSTOMER_ID}-system
+data:
+  customer-id: "${CUSTOMER_ID}"
+  cluster-id: "${CLUSTER_ID}"
+  region: "${REGION}"
+  security-profile: "military-grade"
+  mesh-enabled: "true"
+  created-at: "${TIMESTAMP}"
+  audit-logging: "enabled"
+  packet-blockchain: "enabled"
+  node-count: "${NODE_COUNT}"

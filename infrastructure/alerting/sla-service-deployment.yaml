@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-sla-service
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-sla-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dgla-sla-service
+  template:
+    metadata:
+      labels:
+        app: dgla-sla-service
+    spec:
+      containers:
+      - name: sla-service
+        image: dgla/sla-service:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 500m
+          requests:
+            memory: 256Mi
+            cpu: 250m
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://dgla-mongodb:27017/sla"
+        - name: MONGODB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: sla-secrets
+              key: jwt_secret
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10

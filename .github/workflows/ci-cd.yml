@@ -1,0 +1,151 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, master, develop ]
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [ main, master, develop ]
+
+env:
+  GO_VERSION: '1.18'
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Verify dependencies
+        run: go mod verify
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: latest
+
+      - name: Run tests
+        run: go test -race -coverprofile=coverage.txt -covermode=atomic ./...
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage.txt
+          fail_ci_if_error: false
+
+      - name: Test Swagger Generation
+        run: |
+          go run main.go --test-swagger
+          # Verify swagger.json exists and is valid JSON
+          test -f swagger.json && jq . swagger.json > /dev/null
+
+  build:
+    name: Build and Push
+    needs: test
+    runs-on: ubuntu-latest
+    if: success() && (github.event_name != 'pull_request')
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Log in to the Container registry
+        uses: docker/login-action@v2
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,format=short
+            type=sha,format=long
+
+      - name: Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=dgla
+          cache-to: type=gha,scope=dgla,mode=max
+          build-args: |
+            VERSION=${{ steps.meta.outputs.version }}
+            BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+            COMMIT_HASH=${{ github.sha }}
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    environment: production
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Set up kubeconfig
+        uses: azure/k8s-set-context@v3
+        with:
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
+      - name: Deploy to Kubernetes
+        env:
+          REGISTRY: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          VERSION: ${{ github.ref_name }}
+        run: |
+          # Replace placeholders in Kubernetes manifests
+          sed -i "s|\${REGISTRY_URL}|$REGISTRY|g" ./kubernetes/dgla-deployment.yaml
+          sed -i "s|\${VERSION}|$VERSION|g" ./kubernetes/dgla-deployment.yaml
+          
+          # Create namespace if it doesn't exist
+          kubectl apply -f ./kubernetes/dgla-namespace.yaml
+          
+          # Create secrets
+          kubectl create secret generic dgla-secrets \
+            --namespace=dgla \
+            --from-literal=jwt-secret=${{ secrets.JWT_SECRET }} \
+            --from-literal=redis-password=${{ secrets.REDIS_PASSWORD }} \
+            --dry-run=client -o yaml | kubectl apply -f -
+          
+          # Apply all other resources
+          kubectl apply -f ./kubernetes/dgla-configmap.yaml
+          kubectl apply -f ./kubernetes/dgla-pvc.yaml
+          kubectl apply -f ./kubernetes/dgla-redis.yaml
+          kubectl apply -f ./kubernetes/dgla-deployment.yaml
+          kubectl apply -f ./kubernetes/dgla-service.yaml
+          kubectl apply -f ./kubernetes/dgla-hpa.yaml
+          kubectl apply -f ./kubernetes/dgla-ingress.yaml
+          
+          # Wait for the deployment to complete
+          kubectl -n dgla rollout status deployment/dgla

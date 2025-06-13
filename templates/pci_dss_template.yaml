@@ -1,0 +1,66 @@
+rule_id: PCI_DSS_PAYMENT_CARD
+version: "1.0"
+description: "Payment Card Industry Data Security Standard compliance rule set"
+owner: "dgla_system"
+created_at: "2025-06-01T00:00:00Z"
+updated_at: "2025-06-11T00:00:00Z"
+signature: "d923e17b4c2a5f8940a379b825c87e65b94c3d782a81c6f4bd7e832c9acf6754"
+
+rules:
+  - rule_id: PCI_CARD_DATA_PROTECTION
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'payment_card'"
+    actions:
+      - ensure: "data.metadata.encryption == true"
+      - ensure: "data.metadata.encryption_type in ['AES-256', 'RSA-2048']"
+    violation_response:
+      block_transfer: true
+      alert: "SecurityTeam"
+      log_level: "ERROR"
+      message: "Payment card data must be encrypted with approved methods"
+  
+  - rule_id: PCI_DATA_MASKING
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'payment_card' and data.action == 'display'"
+    actions:
+      - ensure: "data.metadata.masked == true"
+      - ensure: "data.metadata.visible_digits <= 4"
+    violation_response:
+      block_transfer: true
+      alert: "SecurityTeam"
+      log_level: "ERROR"
+      message: "Payment card numbers must be masked with limited visible digits"
+
+  - rule_id: PCI_CARD_STORAGE_RESTRICTIONS
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'payment_card' and data.action == 'store'"
+    actions:
+      - ensure: "data.metadata.store_cvv == false"
+      - ensure: "data.metadata.store_pin == false"
+      - ensure: "data.metadata.retention_period != null and data.metadata.retention_period <= 365"
+    violation_response:
+      block_transfer: true
+      alert: "ComplianceTeam"
+      log_level: "ERROR"
+      message: "CVV/PIN storage prohibited and card data retention period limited"
+
+  - rule_id: PCI_ACCESS_CONTROL
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'payment_card'"
+    actions:
+      - ensure: "data.metadata.access_level == 'authorized_payment_processor'"
+      - log: "data.metadata.user_id"
+      - log: "data.metadata.access_reason"
+    violation_response:
+      block_transfer: true
+      alert: "SecurityTeam"
+      log_level: "ERROR"
+      message: "Strict access control required for payment card data"
+
+# This rule template is signed with rule_owner_key
+rule_owner_key_id: "dgla-system-key-2025"
+rule_owner_signature: "c92f5a7e1b3d48c6902e7f5a3b1c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2"

@@ -1,0 +1,75 @@
+{
+  "license_type": "DGLA_PROPRIETARY",
+  "license_version": "1.0.0",
+  "effective_date": "2025-06-13T07:35:30-04:00",
+  "issuer": {
+    "name": "DGLA Secure Infrastructure",
+    "contact": "legal@dgla-secure.com"
+  },
+  "ip_protection": {
+    "protected_components": [
+      {
+        "name": "SecureMeshNode",
+        "path": "secure-distribution/mesh/secure_mesh.py",
+        "type": "class",
+        "description": "Secure mesh networking implementation with military-grade encryption",
+        "protection_status": "proprietary"
+      },
+      {
+        "name": "PacketBlockchain",
+        "path": "secure-distribution/mesh/secure_mesh.py",
+        "type": "class",
+        "description": "Blockchain-based packet verification system",
+        "protection_status": "proprietary"
+      },
+      {
+        "name": "MeshClient",
+        "path": "secure-distribution/mesh/dgla_mesh_client.py",
+        "type": "class",
+        "description": "Client implementation for secure mesh communication",
+        "protection_status": "proprietary"
+      },
+      {
+        "name": "NanoBond\u2122 Technology",
+        "path": "secure-distribution/docker/rogers_demo_app/app.py",
+        "type": "implementation",
+        "description": "High-efficiency ledger technology for cryptographic verification",
+        "protection_status": "trademarked_proprietary"
+      },
+      {
+        "name": "DGLA Rogers Demo Application",
+        "path": "secure-distribution/docker/rogers_demo_app",
+        "type": "application",
+        "description": "Demonstration of secure infrastructure capabilities",
+        "protection_status": "proprietary"
+      }
+    ],
+    "permitted_use": [
+      "Internal demonstration",
+      "Evaluation",
+      "Research and development (with prior written approval)",
+      "Integration with authorized DGLA partners"
+    ],
+    "prohibited_use": [
+      "Redistribution of source code",
+      "Modification of protected components",
+      "Commercial use without explicit license agreement",
+      "Reverse engineering of proprietary algorithms",
+      "Removal of copyright notices or trademarks"
+    ]
+  },
+  "legal_terms": {
+    "governing_law": "State of California, United States",
+    "liability_limitation": "DGLA SECURE INFRASTRUCTURE SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF THIS SOFTWARE.",
+    "warranty_disclaimer": "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED.",
+    "confidentiality": "All source code and associated documentation is considered confidential information.",
+    "termination": "This license automatically terminates if any of the terms are violated."
+  },
+  "ipfs_timestamp": {
+    "timestamp_date": "2025-06-13T11:39:03.016805",
+    "ipfs_cid": "bafkreih7f7d37c4cc5cee2184ba711f614786ff0f8998",
+    "file_hash": "463a0309d865893893718528b99a51d572169f84c2140901a74381139b7e33aa",
+    "verification_method": "ipfs-timestamp",
+    "status": "submitted"
+  }
+}

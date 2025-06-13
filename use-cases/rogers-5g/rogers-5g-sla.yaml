@@ -1,0 +1,46 @@
+apiVersion: dgla.io/v1
+kind: SLADefinition
+metadata:
+  name: rogers-5g-sla
+  namespace: rogers-5g-production
+spec:
+  customerConfig:
+    enabled: true
+    customerName: "Rogers Communications"
+    customerID: "ROGERS-5G"
+  serviceLevelTemplate:
+    name: "5g-carrier-grade"
+    description: "Carrier-grade SLA for 5G telecommunications infrastructure"
+    customMetrics:
+      - name: "network-uptime"
+        threshold: 99.999
+        unit: "percent"
+        verificationMethod: "cryptographic"
+      - name: "security-incident-response"
+        threshold: 5
+        unit: "minutes"
+        verificationMethod: "timestamp"
+      - name: "data-sovereignty"
+        threshold: 100
+        unit: "percent"
+        verificationMethod: "cryptographic"
+      - name: "latency"
+        threshold: 10
+        unit: "milliseconds"
+        verificationMethod: "aggregated"
+  notificationConfig:
+    criticalChannels:
+      - type: "sms"
+        recipient: "+1-555-0123"
+      - type: "email"
+        recipient: "noc@rogers.example.com"
+    standardChannels:
+      - type: "email"
+        recipient: "ops@rogers.example.com"
+  complianceConfig:
+    regulations:
+      - name: "CRTC-SEC-2025"
+        description: "CRTC 5G Security Requirements 2025"
+      - name: "CSA-T200"
+        description: "Canadian Standards Association Telecom 200"
+    reportingSchedule: "weekly"

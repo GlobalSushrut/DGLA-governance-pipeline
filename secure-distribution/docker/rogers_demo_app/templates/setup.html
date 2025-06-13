@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup - DGLA Secure Infrastructure</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DGLA" width="40" class="d-inline-block align-text-middle me-2">
+                DGLA Secure Infrastructure
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('setup') }}">Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('mesh') }}">Mesh Network</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registry') }}">Docker Registry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('deploy') }}">Deploy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nanobond') }}">NanoBond Ledger</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kubernetes_status') }}">Kubernetes</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h3 class="m-0">Initialize Secure Infrastructure</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('setup') }}">
+                    <div class="mb-3">
+                        <label for="customer_id" class="form-label">Customer ID</label>
+                        <input type="text" class="form-control" id="customer_id" name="customer_id" value="rogers" required>
+                        <div class="form-text">Your unique identifier in the secure network</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="region" class="form-label">Region</label>
+                        <select class="form-select" id="region" name="region" required>
+                            <option value="us-east1">US East (Virginia)</option>
+                            <option value="us-west1">US West (Oregon)</option>
+                            <option value="ca-central1" selected>Canada (Toronto)</option>
+                            <option value="eu-west1">Europe (Ireland)</option>
+                            <option value="ap-southeast1">Asia Pacific (Singapore)</option>
+                        </select>
+                        <div class="form-text">The geographic region for your infrastructure</div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="military_grade" name="military_grade" checked>
+                        <label class="form-check-label" for="military_grade">Enable Military-Grade Security</label>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="nanobond_ledger" name="nanobond_ledger" checked>
+                        <label class="form-check-label" for="nanobond_ledger">Enable NanoBond™ Ledger</label>
+                    </div>
+                    
+                    <div class="card mb-3 bg-light">
+                        <div class="card-header">
+                            <h5>Security Configuration</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Key Strength</label>
+                                        <select class="form-select" disabled>
+                                            <option selected>RSA 4096-bit (Military Grade)</option>
+                                            <option>RSA 2048-bit</option>
+                                            <option>RSA 1024-bit</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label class="form-label">Hash Algorithm</label>
+                                        <select class="form-select" disabled>
+                                            <option selected>SHA3-256 (Military Grade)</option>
+                                            <option>SHA-256</option>
+                                            <option>SHA-1</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg">Initialize Secure Infrastructure</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="m-0">System Requirements</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>Required Components</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Docker Engine 20.10+
+                                <span class="badge bg-success rounded-pill">Detected</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Docker Compose 2.0+
+                                <span class="badge bg-success rounded-pill">Detected</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Python 3.9+
+                                <span class="badge bg-success rounded-pill">Detected</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                OpenSSL 1.1.1+
+                                <span class="badge bg-success rounded-pill">Detected</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5>Network Requirements</h5>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Registry Port (5000)
+                                <span class="badge bg-success rounded-pill">Available</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                NanoBond API Port (8080)
+                                <span class="badge bg-success rounded-pill">Available</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Lockbox Port (8081)
+                                <span class="badge bg-success rounded-pill">Available</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Mesh Network Port (9000)
+                                <span class="badge bg-success rounded-pill">Available</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">© 2025 DGLA Secure Infrastructure - Rogers Demo</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

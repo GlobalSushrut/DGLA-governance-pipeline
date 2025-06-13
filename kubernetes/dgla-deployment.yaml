@@ -1,0 +1,99 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dgla
+  namespace: dgla
+  labels:
+    app: dgla
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dgla
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app: dgla
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8081"
+    spec:
+      securityContext:
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+      containers:
+      - name: dgla
+        image: ${REGISTRY_URL}/dgla:${VERSION}
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8081
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
+            cpu: "1"
+            memory: "512Mi"
+        env:
+        - name: DGLA_SERVER_PORT
+          value: "8081"
+        - name: DGLA_LOG_LEVEL
+          value: "info"
+        - name: DGLA_AUTH_ENABLED
+          value: "true"
+        - name: DGLA_AUTH_JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: dgla-secrets
+              key: jwt-secret
+        - name: DGLA_CACHE_TYPE
+          value: "redis"
+        - name: DGLA_CACHE_REDIS_HOST
+          value: "dgla-redis"
+        - name: DGLA_CACHE_REDIS_PORT
+          value: "6379"
+        - name: DGLA_CACHE_REDIS_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: dgla-secrets
+              key: redis-password
+        - name: DGLA_CACHE_REDIS_DB
+          value: "0"
+        livenessProbe:
+          httpGet:
+            path: /alive
+            port: 8081
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8081
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          successThreshold: 1
+          failureThreshold: 3
+        volumeMounts:
+        - name: logs
+          mountPath: /app/logs
+        - name: config
+          mountPath: /app/config.json
+          subPath: config.json
+      volumes:
+      - name: logs
+        persistentVolumeClaim:
+          claimName: dgla-logs-pvc
+      - name: config
+        configMap:
+          name: dgla-config

@@ -1,0 +1,18 @@
+cdn:
+  enabled: true
+  regions:
+  - us-east
+  - eu-west
+  - asia-east
+environment: production
+kubernetes:
+  context: minikube
+  namespace: rogers-5g-production
+mongodb:
+  merkle_enabled: true
+  replicas: 3
+sla:
+  default_tier: silver
+  enabled: true
+vendors: []
+version: 1.0.0

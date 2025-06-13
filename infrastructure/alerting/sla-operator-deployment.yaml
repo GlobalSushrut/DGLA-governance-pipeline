@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-sla-operator
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-sla-operator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: dgla-sla-operator
+  template:
+    metadata:
+      labels:
+        app: dgla-sla-operator
+    spec:
+      serviceAccountName: sla-operator
+      containers:
+      - name: sla-operator
+        image: dgla/sla-operator:latest
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 500m
+          requests:
+            memory: 256Mi
+            cpu: 250m
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://dgla-mongodb:27017/sla"
+        - name: MONGODB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: WATCH_NAMESPACE
+          value: ""  # Watch all namespaces
+        - name: OPERATOR_NAME
+          value: "dgla-sla-operator"
+        - name: MERKLE_VERIFICATION_ENABLED
+          value: "true"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10

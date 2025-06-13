@@ -1,6 +1,12 @@
-# DGLA Data Governance and Lineage Tracking System
+# DGLA™ Advanced Data Governance & Lineage Architecture
 
-A production-grade system that automates data governance and lineage tracking with cryptographic proofs. This enterprise-ready solution features JWT authentication, Redis caching, Prometheus metrics, structured logging, and comprehensive health checks to ensure robust performance and reliability in mission-critical environments.
+![DGLA Security](https://img.shields.io/badge/Security-Military%20Grade-00458B) ![IP Protected](https://img.shields.io/badge/IP%20Protection-IPFS%20Timestamped-orange) ![Version](https://img.shields.io/badge/Version-2.5.1-blue) ![License](https://img.shields.io/badge/License-Proprietary-red)
+
+## Secure, Auditable, Enterprise-Ready Infrastructure
+
+DGLA™ is a revolutionary **military-grade** data governance solution that protects your mission-critical information with cryptographic verification, complete audit trails, and tamper-proof record-keeping. Our proprietary technology employs advanced blockchain architectures with IPFS-validated timestamps to ensure compliance, security, and immutability for sensitive data assets.
+
+> **⚠️ INTELLECTUAL PROPERTY NOTICE**: This repository contains proprietary code and technologies protected under international IP laws. Repository cloning is tracked with user profiles, timestamps, and cryptographic watermarks. All source code access is logged in our secure ledger system and validated with the IPFS network. Unauthorized reproduction or derivative works are strictly prohibited.
 
 ## Project Overview
 
@@ -199,19 +205,79 @@ The system includes a comprehensive benchmarking suite for performance testing:
 - **High Availability**: Configurable for cluster deployment
 - **Observability**: Metrics, structured logs, and health endpoints
 
+## Intellectual Property Protection
+
+DGLA™ implements advanced IP protection mechanisms to secure our proprietary technologies:
+
+- **Clone Tracking**: Every repository clone is tracked with user profiles, timestamps, and IP addresses
+- **IPFS Timestamping**: All source code files are timestamped on the IPFS network for immutable proof of creation
+- **Cryptographic Watermarking**: Unique watermarks are embedded in cloned repositories for traceability
+- **License Verification**: Proprietary license validated through blockchain verification
+- **Automated Monitoring**: Real-time alerts for suspicious repository activities
+- **Legal Protection**: All components covered by comprehensive IP rights outlined in LICENSE.json
+
+### Protected Components
+
+| Component | Protection Level | Description |
+|-----------|-----------------|-------------|
+| SecureMeshNode | Proprietary | Military-grade encrypted networking |
+| PacketBlockchain | Proprietary | Blockchain-based packet verification |
+| NanoBond™ Technology | Trademarked & Proprietary | Cryptographic ledger verification |
+| MeshClient | Proprietary | Secure communication client |
+
+*To view detailed IP protection information, run:* `python3 security/ip_tracker.py --list`
+
 ## Documentation
 
 See additional documentation files:
 
+- [IP Protection System](./security/IP_PROTECTION.md) - Details on our advanced IP tracking and protection
+
 - [Log & Benchmark Data](log.md): Details about logging and benchmarks
 - [Real-World Applications](real_world_applications.md): Industry use cases
+
+## Infrastructure Components
+
+### Kubernetes Deployment
+
+The project includes production-ready Kubernetes manifests:
+
+- **Namespace Isolation**: Dedicated namespace for resource isolation
+- **Deployment Strategy**: Rolling updates with configurable parameters
+- **Service Definition**: ClusterIP service with appropriate port mappings
+- **Ingress Controller**: External access with TLS termination
+- **ConfigMaps & Secrets**: Separation of configuration and sensitive data
+- **Resource Requests/Limits**: Proper resource allocation for stability
+- **Health Probes**: Readiness and liveness checks for reliability
+- **Horizontal Autoscaling**: Dynamic scaling based on CPU and memory metrics
+- **Persistent Storage**: PVCs for log storage and data retention
+- **Redis StatefulSet**: Properly configured Redis instance for caching
+
+### CI/CD Pipeline
+
+Automated workflow for testing and deployment:
+
+- **Automated Testing**: Unit, integration and Swagger documentation tests
+- **Code Quality**: Linting and code coverage reports
+- **Container Building**: Multi-stage Docker builds with caching
+- **Registry Integration**: Automatic pushing to container registries
+- **Kubernetes Deployment**: Automated deployment to production environments
+- **Environment Management**: Staging and production environment support
+
+### Monitoring & Observability
+
+- **Prometheus Integration**: Metrics collection with appropriate scraping configuration
+- **Grafana Dashboards**: Pre-configured dashboards for API and Swagger monitoring
+- **Swagger Documentation**: Interactive API documentation for developers
+- **Health Endpoints**: Comprehensive health and readiness checks
 
 ## Future Enhancements
 
 - Machine learning for rule optimization
-- Web dashboard for monitoring and configuration
-- Integration with CI/CD pipelines
-- Distributed deployment for high availability
+- Advanced security scanning in CI/CD pipeline
+- Network policies for enhanced Kubernetes security
+- GitOps deployment model for infrastructure as code
+- Cloud provider-specific optimizations
 - Support for additional cryptographic proof algorithms
 
 ## License

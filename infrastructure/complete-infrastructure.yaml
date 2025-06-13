@@ -1,0 +1,188 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rogers-5g-production
+  labels:
+    name: rogers-5g-production
+    monitoring: enabled
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-api
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-api
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dgla-api
+  template:
+    metadata:
+      labels:
+        app: dgla-api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: api-server
+        image: dgla/api-server:latest
+        ports:
+        - containerPort: 8080
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: 1
+          requests:
+            memory: 512Mi
+            cpu: 500m
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://dgla-mongodb:27017/api"
+        - name: MONGODB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: MERKLE_SERVICE
+          value: "http://dgla-merkle-service:8888"
+        - name: CLIENT_DB_CONNECTOR
+          value: "http://dgla-client-db-connector:8080"
+        - name: CDN_SERVICE
+          value: "http://dgla-cdn-service"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: api-secrets
+              key: jwt_secret
+        - name: ENABLE_ZERO_KNOWLEDGE
+          value: "true"
+        - name: POST_QUANTUM_ALGORITHMS
+          value: "true"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rogers-5g-production-api-service
+  namespace: rogers-5g-production
+spec:
+  selector:
+    app: dgla-api
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: rogers-5g-production-ingress
+  namespace: rogers-5g-production
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /$1
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  tls:
+  - hosts:
+      - api.dgla.io
+    secretName: dgla-tls-secret
+  rules:
+  - host: api.dgla.io
+    http:
+      paths:
+      - path: /api/v1/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rogers-5g-production-api-service
+            port:
+              number: 8080
+      - path: /cdn/(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: rogers-5g-production-cdn-service
+            port:
+              number: 80
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-secrets
+  namespace: rogers-5g-production
+type: Opaque
+data:
+  jwt_secret: ZGdsYS1hcGktand0LXNlY3JldA== # dgla-api-jwt-secret (change in production)
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: rogers-5g-production-system-config
+  namespace: rogers-5g-production
+data:
+  system-config.yaml: |
+    api:
+      concurrency: 200
+      timeout: 30s
+      rateLimiting:
+        enabled: true
+        perMinute: 6000
+        perIp: 100
+    
+    security:
+      zeroKnowledge: true
+      merkleVerification: true
+      postQuantum: true
+      jwtLifetime: 3600
+      refreshTokenLifetime: 86400
+      requireTLS: true
+    
+    cdn:
+      enabled: true
+      cacheTtl: 3600
+      regions:
+        - us-east
+        - eu-west
+        - asia-east
+    
+    monitoring:
+      prometheusEnabled: true
+      alertingEnabled: true
+      retentionDays: 30
+      slaMonitoring: true
+      
+    database:
+      mongoReplicas: 3
+      sharding: true
+      backupSchedule: "0 2 * * *"
+      merkleVerificationInterval: 300
+      
+    clientConnector:
+      rbacEnabled: true
+      dataSovereignty: true
+      encryptDataAtRest: true
+      maxConnectionsPerClient: 50

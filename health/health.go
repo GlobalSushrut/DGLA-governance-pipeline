@@ -227,18 +227,11 @@ func (c *Checker) checkAll() {
 
 		if err != nil {
 			component.Error = err.Error()
-			c.logger.Warn().
-				Str("component", name).
-				Str("status", string(status)).
-				Err(err).
-				Msg("Component health check failed")
+			c.logger.Warn("Component health check failed")
 		} else {
 			component.Error = ""
 			component.LastSuccessTime = now
-			c.logger.Debug().
-				Str("component", name).
-				Str("status", string(status)).
-				Msg("Component health check completed")
+			c.logger.Debug("Component health check completed")
 		}
 
 		// Update overall status (worst case wins)

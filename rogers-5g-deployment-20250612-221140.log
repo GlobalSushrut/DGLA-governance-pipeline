@@ -1,0 +1,35 @@
+
+[1;33mVerifying prerequisites...[0m
+
+[1;33mVerifying Python dependencies...[0m
+
+[1;33mVerifying DGLA CLI...[0m
+
+[1;33mVerifying Rogers 5G module integration...[0m
+[0;32m✓ Rogers 5G module available[0m
+
+[1;33mInitializing DGLA CLI with production configuration...[0m
+[2025-06-12 22:11:49] INFO: Initializing DGLA environment...
+[2025-06-12 22:11:49] INFO: DGLA initialized with namespace: rogers-5g-production, environment: production
+[2025-06-12 22:11:49] INFO: Run 'dgla deploy' to deploy the system components
+[0;32m✓ DGLA CLI initialized with production settings[0m
+
+[1;33mConfiguring Rogers 5G Security System...[0m
+Configuration generated at /home/umesh/.dgla/rogers-5g-config.yaml
+[0;32m✓ Rogers 5G Security System configured[0m
+
+[1;33mApplying Custom Resource Definitions...[0m
+customresourcedefinition.apiextensions.k8s.io/sladefinitions.dgla.io unchanged
+customresourcedefinition.apiextensions.k8s.io/securityconfigs.dgla.io unchanged
+[0;32m✓ Custom Resource Definitions applied[0m
+
+[1;33mDeploying core DGLA infrastructure...[0m
+[2025-06-12 22:11:50] INFO: Deploying mongodb...
+[2025-06-12 22:11:51] INFO: Deploying monitoring...
+[2025-06-12 22:11:52] INFO: Deploying alerting...
+[2025-06-12 22:11:53] INFO: Deploying sla...
+[2025-06-12 22:11:54] INFO: Deploying api...
+[2025-06-12 22:11:55] INFO: Deployment completed. Run 'dgla status' to check component status.
+[0;32m✓ Core DGLA infrastructure deployed[0m
+
+[1;33mWaiting for core components to be ready...[0m

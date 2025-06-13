@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-cdn
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-cdn
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dgla-cdn
+  template:
+    metadata:
+      labels:
+        app: dgla-cdn
+    spec:
+      containers:
+      - name: cdn-server
+        image: dgla/cdn-server:latest
+        ports:
+        - containerPort: 80
+        - containerPort: 443
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        env:
+        - name: ORIGIN_SERVER
+          valueFrom:
+            configMapKeyRef:
+              name: cdn-config
+              key: origin_server
+        - name: CACHE_TTL
+          valueFrom:
+            configMapKeyRef:
+              name: cdn-config
+              key: cache_ttl
+        - name: CRYPTO_KEY
+          valueFrom:
+            secretKeyRef:
+              name: cdn-secrets
+              key: crypto_key
+        volumeMounts:
+        - name: cdn-storage
+          mountPath: /var/cache/cdn
+      volumes:
+      - name: cdn-storage
+        persistentVolumeClaim:
+          claimName: cdn-pvc

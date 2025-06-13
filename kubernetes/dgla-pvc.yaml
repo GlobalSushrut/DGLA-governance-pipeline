@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dgla-logs-pvc
+  namespace: dgla
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 5Gi
+  # Use your cloud provider's storage class or specify a custom one
+  storageClassName: standard

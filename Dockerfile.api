@@ -1,0 +1,16 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install required packages
+COPY requirements-api.txt .
+RUN pip install --no-cache-dir -r requirements-api.txt
+
+# Copy the API implementation
+COPY api_server.py .
+
+# Expose the API port
+EXPOSE 8081
+
+# Run the API server
+CMD ["python", "api_server.py"]

@@ -1,4 +1,4 @@
-version: '3.8'
+version: '3.3'
 
 services:
   dgla:
@@ -29,17 +29,13 @@ services:
       - redis
     networks:
       - dgla-network
-    deploy:
-      resources:
-        limits:
-          cpus: '1'
-          memory: 512M
+    # Resources removed for compatibility
+    # Using default resource allocation
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081/alive"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 5s
 
   redis:
     image: redis:7-alpine
@@ -57,11 +53,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 256M
+    # Resources removed for compatibility
 
   prometheus:
     image: prom/prometheus:latest
@@ -80,11 +72,7 @@ services:
       - '--web.enable-lifecycle'
     networks:
       - dgla-network
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
+    # Resources removed for compatibility
 
   grafana:
     image: grafana/grafana:latest
@@ -103,11 +91,7 @@ services:
       - dgla-network
     depends_on:
       - prometheus
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
+    # Resources removed for compatibility
 
 networks:
   dgla-network:

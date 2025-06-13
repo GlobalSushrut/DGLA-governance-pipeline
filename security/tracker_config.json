@@ -1,0 +1,26 @@
+{
+  "repository": "DGLA/data-governance-pipeline",
+  "notification_email": "security@dgla-secure.com",
+  "alert_threshold": 5,
+  "webhook_url": "https://api.dgla-secure.com/webhooks/clone-tracking",
+  "ip_check_enabled": true,
+  "automated_responses": {
+    "suspicious_clone": true,
+    "unauthorized_fork": true,
+    "multiple_clones": true
+  },
+  "enable_license_verification": true,
+  "enable_clone_watermarking": true,
+  "watermark_strategies": [
+    "timestamp_encoding",
+    "metadata_injection", 
+    "unique_identifier"
+  ],
+  "ipfs_tracking_enabled": true,
+  "ip_protection_level": "high",
+  "reporting": {
+    "daily_summary": true,
+    "security_alerts": true,
+    "usage_metrics": true
+  }
+}

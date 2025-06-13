@@ -1,0 +1,49 @@
+apiVersion: dgla.io/v1
+kind: SystemConfig
+metadata:
+  name: rogers-5g-security
+spec:
+  name: "Rogers 5G Security System"
+  provider: "Rogers Communications"
+  version: "1.0.0"
+  components:
+    - name: ran-security
+      enabled: true
+      monitoring:
+        - metricName: "signal-integrity"
+          threshold: 99.99
+        - metricName: "firmware-verification"
+          threshold: 100
+    - name: core-security
+      enabled: true
+      monitoring:
+        - metricName: "subscriber-db-integrity"
+          threshold: 100
+        - metricName: "control-plane-latency"
+          threshold: 10
+    - name: slice-security
+      enabled: true
+      slices:
+        - name: "emergency-services"
+          priority: "critical"
+          verification: "continuous"
+        - name: "consumer-data"
+          priority: "standard"
+          verification: "periodic"
+  cryptoConfig:
+    merkleEnabled: true
+    postQuantumAlgorithms: true
+    verificationInterval: 60
+  complianceConfig:
+    crtcRegulations: true
+    dataResidency: "Canada"
+    auditSchedule: "hourly"
+  alertConfig:
+    criticalChannels:
+      - type: "sms"
+        recipient: "security-team"
+      - type: "email"
+        recipient: "noc@rogers.example.com"
+    standardChannels:
+      - type: "dashboard"
+        recipient: "security-operations"

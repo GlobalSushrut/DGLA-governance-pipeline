@@ -1,0 +1,165 @@
+version: '3.7'
+
+services:
+  # Secure Docker Registry with advanced security features
+  registry:
+    image: registry:2.8
+    container_name: dgla-secure-registry
+    restart: always
+    ports:
+      - "5000:5000"
+    environment:
+      - REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY=/var/lib/registry
+      - REGISTRY_HTTP_TLS_CERTIFICATE=/certs/domain.crt
+      - REGISTRY_HTTP_TLS_KEY=/certs/domain.key
+      - REGISTRY_AUTH=token
+      - REGISTRY_AUTH_TOKEN_REALM=https://auth.dgla.secure/auth
+      - REGISTRY_AUTH_TOKEN_SERVICE=container_registry
+      - REGISTRY_AUTH_TOKEN_ISSUER=dgla-auth-server
+      - REGISTRY_AUTH_TOKEN_ROOTCERTBUNDLE=/certs/auth.crt
+      # Content trust settings
+      - REGISTRY_HTTP_HEADERS_X-Content-Type-Options=[nosniff]
+      # Security middleware
+      - REGISTRY_MIDDLEWARE_REPOSITORY_ENFORCEMENT_ENABLED=true
+      - REGISTRY_MIDDLEWARE_REPOSITORY_ENFORCEMENT_OPTIONS_DISALLOWPULL=false
+    volumes:
+      - registry_data:/var/lib/registry
+      - ./certs:/certs
+      - ./auth:/auth
+    networks:
+      - dgla-secure-network
+
+  # Authentication server for Docker registry
+  auth:
+    image: cesanta/docker_auth:1.7
+    container_name: dgla-auth-server
+    restart: always
+    ports:
+      - "5001:5001"
+    volumes:
+      - ./auth/config.yml:/config/auth_config.yml:ro
+      - ./certs:/certs
+      - ./users:/users
+    command: -logtostderr /config/auth_config.yml
+    networks:
+      - dgla-secure-network
+
+  # Image signing and verification service
+  notary:
+    image: theupdateframework/notary-server:0.7.0
+    container_name: dgla-notary-server
+    restart: always
+    ports:
+      - "4443:4443"
+    environment:
+      - NOTARY_SERVER_LOGGING_LEVEL=info
+      - NOTARY_TRUST_SERVICE_HOST=trust-signer
+      - NOTARY_TRUST_SERVICE_PORT=7899
+      - NOTARY_AUTH_SERVICE_HOST=auth
+      - NOTARY_AUTH_SERVICE_PORT=5001
+    volumes:
+      - notary_data:/var/lib/notary
+      - ./certs:/certs
+    depends_on:
+      - auth
+    networks:
+      - dgla-secure-network
+
+  # Trust service signer
+  trust-signer:
+    image: theupdateframework/notary-signer:0.7.0
+    container_name: dgla-trust-signer
+    restart: always
+    environment:
+      - NOTARY_SIGNER_LOGGING_LEVEL=info
+    volumes:
+      - signer_data:/var/lib/notary
+      - ./certs:/certs
+    networks:
+      - dgla-secure-network
+
+  # Image scanning service
+  clair:
+    image: quay.io/projectquay/clair:v4.3.6
+    container_name: dgla-image-scanner
+    restart: always
+    ports:
+      - "6060:6060"
+    volumes:
+      - ./clair:/config
+    command: -config /config/config.yaml
+    networks:
+      - dgla-secure-network
+    depends_on:
+      - clair-db
+
+  # Clair database
+  clair-db:
+    image: postgres:13
+    container_name: dgla-clair-db
+    restart: always
+    environment:
+      - POSTGRES_PASSWORD=secure_password_change_me
+      - POSTGRES_USER=clair
+      - POSTGRES_DB=clair
+    volumes:
+      - clair_db:/var/lib/postgresql/data
+    networks:
+      - dgla-secure-network
+
+  # Image mutation prevention proxy
+  lockbox:
+    image: dgla/lockbox:latest
+    container_name: dgla-image-lockbox
+    build:
+      context: ./lockbox
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./lockbox/config:/app/config
+    environment:
+      - LOCKBOX_JWT_SECRET=change_this_to_random_secret
+      - LOCKBOX_REGISTRY_ENDPOINT=https://registry:5000
+      - LOCKBOX_IMMUTABLE_MODE=true
+      - LOCKBOX_VERIFICATION_LEVEL=strict
+    networks:
+      - dgla-secure-network
+    depends_on:
+      - registry
+
+  # Lightweight immutable ledger (100x lighter than blockchain)
+  nanobond:
+    image: dgla/nanobond:latest
+    container_name: dgla-nanobond-ledger
+    build:
+      context: ./nanobond
+      dockerfile: Dockerfile
+    restart: always
+    ports:
+      - "9090:9090"
+    environment:
+      - NANOBOND_BATCH_SIZE=100
+      - NANOBOND_HASH_ALGORITHM=sha3-256
+      - NANOBOND_APPEND_ONLY=true
+      - NANOBOND_VERIFICATION_INTERVAL=60
+      - NANOBOND_STORAGE_PATH=/data
+    volumes:
+      - nanobond_data:/data
+    networks:
+      - dgla-secure-network
+
+networks:
+  dgla-secure-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  registry_data:
+  notary_data:
+  signer_data:
+  clair_db:
+  nanobond_data:

@@ -1,0 +1,157 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dgla-secure-deployment-server
+  namespace: dgla-system
+  labels:
+    app: dgla-deployment-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: dgla-deployment-server
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: dgla-deployment-server
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: dgla-server
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+      containers:
+      - name: dgla-server
+        image: ghcr.io/dgla/dgla-deployment-server:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+        env:
+        - name: DGLA_CONFIG
+          value: "/etc/dgla/config.yaml"
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/dgla
+          readOnly: true
+        - name: data-volume
+          mountPath: /var/lib/dgla
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 20
+      volumes:
+      - name: config-volume
+        configMap:
+          name: dgla-server-config
+      - name: data-volume
+        persistentVolumeClaim:
+          claimName: dgla-server-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dgla-deployment-server
+  namespace: dgla-system
+spec:
+  selector:
+    app: dgla-deployment-server
+  ports:
+  - port: 8080
+    targetPort: 8080
+    name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dgla-server
+  namespace: dgla-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: dgla-server-role
+rules:
+- apiGroups: [""]
+  resources: ["namespaces", "pods", "services", "configmaps", "secrets"]
+  verbs: ["get", "create", "list", "watch"]
+- apiGroups: ["apps"]
+  resources: ["deployments"]
+  verbs: ["get", "create", "list", "watch"]
+- apiGroups: ["dgla.io"]
+  resources: ["*"]
+  verbs: ["get", "create", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dgla-server-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dgla-server-role
+subjects:
+- kind: ServiceAccount
+  name: dgla-server
+  namespace: dgla-system
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dgla-server-config
+  namespace: dgla-system
+data:
+  config.yaml: |
+    version: 1.0.0
+    api:
+      port: 8080
+      auth_required: true
+      cors_origins: []
+    storage:
+      deployments_dir: /var/lib/dgla/deployments
+      ledger_path: /var/lib/dgla/ledger.toml
+      max_deployment_size_mb: 10
+    kubernetes:
+      in_cluster: true
+      isolation_mode: namespace
+      allow_deletion: false
+    verification:
+      verify_signatures: true
+      public_key_path: /etc/dgla/keys/dgla_public.pem
+      required_attestations: ["integrity", "authorship"]
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: dgla-server-data
+  namespace: dgla-system
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: standard

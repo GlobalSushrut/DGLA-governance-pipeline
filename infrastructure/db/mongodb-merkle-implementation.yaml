@@ -1,0 +1,73 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-merkle-service
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-merkle-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dgla-merkle-service
+  template:
+    metadata:
+      labels:
+        app: dgla-merkle-service
+    spec:
+      containers:
+      - name: merkle-service
+        image: dgla/merkle-service:latest
+        ports:
+        - containerPort: 8888
+          name: http
+        resources:
+          limits:
+            memory: 512Mi
+            cpu: 500m
+          requests:
+            memory: 256Mi
+            cpu: 250m
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://dgla-mongodb:27017/merkle"
+        - name: MONGODB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: MERKLE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: merkle_key
+        - name: POST_QUANTUM_ENABLED
+          value: "true"
+        - name: VERIFICATION_BATCH_SIZE
+          value: "1000"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8888
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rogers-5g-production-merkle-service
+  namespace: rogers-5g-production
+spec:
+  selector:
+    app: dgla-merkle-service
+  ports:
+  - port: 8888
+    targetPort: 8888
+    protocol: TCP
+    name: http
+  type: ClusterIP

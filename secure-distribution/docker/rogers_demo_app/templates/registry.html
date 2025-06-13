@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registry - DGLA Secure Infrastructure</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DGLA" width="40" class="d-inline-block align-text-middle me-2">
+                DGLA Secure Infrastructure
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('mesh') }}">Mesh Network</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('registry') }}">Docker Registry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('deploy') }}">Deploy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nanobond') }}">NanoBond Ledger</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kubernetes_status') }}">Kubernetes</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                <h3 class="m-0">Secure Docker Registry</h3>
+                <span class="badge bg-success">OPERATIONAL</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Registry Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-2">
+                                    <strong>URL:</strong> https://registry.example.com:5000
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Authentication:</strong> Token-based
+                                </div>
+                                <div class="mb-2">
+                                    <strong>TLS:</strong> 4096-bit RSA
+                                </div>
+                                <div>
+                                    <strong>Customer:</strong> {{ customer_id or 'rogers' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card h-100">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Security Features</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="tokenBasedAuth" checked disabled>
+                                            <label class="form-check-label" for="tokenBasedAuth">Token-based Authentication</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="tlsEncryption" checked disabled>
+                                            <label class="form-check-label" for="tlsEncryption">TLS Encryption (4096-bit)</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="rbac" checked disabled>
+                                            <label class="form-check-label" for="rbac">Role-Based Access Control</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="imageSigning" checked disabled>
+                                            <label class="form-check-label" for="imageSigning">Content Trust (Image Signing)</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="vulnScanning" checked disabled>
+                                            <label class="form-check-label" for="vulnScanning">Vulnerability Scanning</label>
+                                        </div>
+                                        <div class="form-check form-switch mb-3">
+                                            <input class="form-check-input" type="checkbox" id="immutability" checked disabled>
+                                            <label class="form-check-label" for="immutability">Image Immutability</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h5 class="m-0">NanoBond™-Verified Images</h5>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Image Name</th>
+                                    <th>Tag</th>
+                                    <th>Digest</th>
+                                    <th>Created</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for image in images %}
+                                <tr>
+                                    <td>{{ image.name }}</td>
+                                    <td><code>{{ image.tag }}</code></td>
+                                    <td><small><code>{{ image.digest[:16] }}...</code></small></td>
+                                    <td>{{ image.created }}</td>
+                                    <td>
+                                        {% if image.verified %}
+                                        <span class="badge bg-success">Verified</span>
+                                        {% else %}
+                                        <span class="badge bg-warning">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('deploy') }}?image={{ image.name }}&tag={{ image.tag }}" class="btn btn-sm btn-primary">Deploy</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Registry Components</h5>
+                            </div>
+                            <div class="card-body">
+                                <table class="table">
+                                    <tbody>
+                                        <tr>
+                                            <td>Docker Registry</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Authentication Server</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Notary Service</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Clair Scanner</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>Lockbox Service</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td>NanoBond™ Ledger</td>
+                                            <td><span class="badge bg-success">Running</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="m-0">Recent Registry Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group">
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Image Push</h6>
+                                            <small>Just now</small>
+                                        </div>
+                                        <p class="mb-1">{{ customer_id or 'rogers' }}/secure-app:1.0.0</p>
+                                        <small>Verified and signed with NanoBond™ #{{ images[0].nanobond_id if images else 'nb-12345678' }}</small>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Image Pull</h6>
+                                            <small>3 hours ago</small>
+                                        </div>
+                                        <p class="mb-1">{{ customer_id or 'rogers' }}/api-gateway:2.1.0</p>
+                                        <small>Signature verified with content trust</small>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex w-100 justify-content-between">
+                                            <h6 class="mb-1">Image Scan</h6>
+                                            <small>6 hours ago</small>
+                                        </div>
+                                        <p class="mb-1">{{ customer_id or 'rogers' }}/data-processor:0.9.5</p>
+                                        <small>No vulnerabilities found</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">© 2025 DGLA Secure Infrastructure - Rogers Demo</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rogers-5g-production-client-db-connector
+  namespace: rogers-5g-production
+  labels:
+    app: dgla-client-db-connector
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dgla-client-db-connector
+  template:
+    metadata:
+      labels:
+        app: dgla-client-db-connector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "9090"
+    spec:
+      containers:
+      - name: db-connector
+        image: dgla/db-connector:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        - containerPort: 9090
+          name: metrics
+        resources:
+          limits:
+            memory: 1Gi
+            cpu: 1
+          requests:
+            memory: 512Mi
+            cpu: 500m
+        env:
+        - name: MONGODB_URI
+          value: "mongodb://dgla-mongodb:27017/clientdata"
+        - name: MONGODB_USER
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: username
+        - name: MONGODB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: mongodb-secret
+              key: password
+        - name: MERKLE_SERVICE
+          value: "http://dgla-merkle-service:8888"
+        - name: CDN_SERVICE
+          value: "http://dgla-cdn-service"
+        - name: CLIENT_DB_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: client-db-secret
+              key: client_key
+        - name: ENABLE_RBAC
+          value: "true"
+        - name: ENABLE_DATA_SOVEREIGNTY
+          value: "true"
+        volumeMounts:
+        - name: client-configs
+          mountPath: /etc/dgla/clients
+      volumes:
+      - name: client-configs
+        configMap:
+          name: client-db-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rogers-5g-production-client-db-connector
+  namespace: rogers-5g-production
+spec:
+  selector:
+    app: dgla-client-db-connector
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  type: ClusterIP
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: client-db-config
+  namespace: rogers-5g-production
+data:
+  client-db-settings.yaml: |
+    # DGLA client database connector configuration
+    connectors:
+      - name: standard
+        poolSize: 50
+        timeoutMs: 5000
+        retryEnabled: true
+        maxRetries: 3
+        cryptoVerificationEnabled: true
+      - name: high-throughput
+        poolSize: 100
+        timeoutMs: 2000
+        retryEnabled: true
+        maxRetries: 5
+        cryptoVerificationEnabled: true
+      - name: ultra-secure
+        poolSize: 25
+        timeoutMs: 10000
+        retryEnabled: false
+        cryptoVerificationEnabled: true
+        postQuantumEnabled: true
+    
+    # RBAC configuration
+    rbacSettings:
+      enabled: true
+      rolesPath: "/etc/dgla/clients/roles"
+      defaultRole: "reader"
+      adminRole: "admin"
+      roleHierarchy:
+        - name: reader
+          permissions:
+            - read
+        - name: writer
+          permissions:
+            - read
+            - write
+        - name: admin
+          permissions:
+            - read
+            - write
+            - delete
+            - configure
+    
+    # Data sovereignty settings
+    dataSovereignty:
+      enabled: true
+      regionSettings:
+        - region: "us"
+          allowedFor: ["us-customers"]
+          merkleTreePrefix: "us"
+        - region: "eu"
+          allowedFor: ["eu-customers"]
+          merkleTreePrefix: "eu"
+          gdprCompliant: true
+        - region: "asia"
+          allowedFor: ["asia-customers"]
+          merkleTreePrefix: "asia"
+      enforcementStrategy: "cryptographic" # Options: cryptographic, logical, hybrid
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: client-db-secret
+  namespace: rogers-5g-production
+type: Opaque
+data:
+  client_key: ZGdsYS1jbGllbnQtZGItc2VjcmV0LWtleQ== # dgla-client-db-secret-key (change in production)

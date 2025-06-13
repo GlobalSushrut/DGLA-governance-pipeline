@@ -1,0 +1,65 @@
+rule_id: HIPAA_US_HEALTHCARE
+version: "1.0"
+description: "Health Insurance Portability and Accountability Act (US) compliance rule set"
+owner: "dgla_system"
+created_at: "2025-06-01T00:00:00Z"
+updated_at: "2025-06-11T00:00:00Z"
+signature: "f47ae92861905785f416a8a603520a8692e9f30db249875e835fbd517a3856d1"
+
+rules:
+  - rule_id: HIPAA_PHI_PROTECTION
+    version: "1.0"
+    conditions:
+      if: "data.is_pii == true and data.metadata.data_type == 'phi'"
+    actions:
+      - ensure: "data.metadata.encryption == true"
+      - ensure: "data.metadata.access_level in ['authorized_medical', 'patient_authorized']"
+    violation_response:
+      block_transfer: true
+      alert: "ComplianceTeam"
+      log_level: "ERROR"
+      message: "PHI must be encrypted and properly access-controlled"
+  
+  - rule_id: HIPAA_MINIMUM_NECESSARY
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'phi'"
+    actions:
+      - ensure: "data.metadata.purpose != null and data.metadata.purpose != ''"
+      - ensure: "data.metadata.scope == 'minimum_necessary'"
+    violation_response:
+      block_transfer: true
+      alert: "ComplianceTeam"
+      log_level: "ERROR"
+      message: "HIPAA requires minimum necessary information principle"
+
+  - rule_id: HIPAA_BREACH_NOTIFICATION
+    version: "1.0"
+    conditions:
+      if: "data.metadata.event_type == 'data_breach' and data.metadata.data_type == 'phi'"
+    actions:
+      - notify: "data.metadata.privacy_officer_email"
+      - notify: "data.metadata.affected_patients"
+    violation_response:
+      block_transfer: false
+      alert: "PrivacyTeam"
+      log_level: "CRITICAL"
+      message: "PHI breach requires notification to affected individuals"
+
+  - rule_id: HIPAA_AUDIT_LOGGING
+    version: "1.0"
+    conditions:
+      if: "data.metadata.data_type == 'phi' and data.action in ['read', 'update', 'delete']"
+    actions:
+      - log: "data.metadata.user_id"
+      - log: "data.metadata.access_reason"
+      - log: "data.timestamp"
+    violation_response:
+      block_transfer: false
+      alert: "ComplianceTeam"
+      log_level: "WARNING"
+      message: "Access to PHI must be fully audited"
+
+# This rule template is signed with rule_owner_key
+rule_owner_key_id: "dgla-system-key-2025"
+rule_owner_signature: "b83f2c9d1a45e7b09c6a2d7e0f8a3b5c7d9e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0"

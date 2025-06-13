@@ -1,0 +1,29 @@
+version: '3.3'
+
+services:
+  dgla-cyber-adapter:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dgla-cyber-adapter
+    restart: unless-stopped
+    volumes:
+      - ../logs:/app/logs
+    networks:
+      - dgla-network
+    depends_on:
+      - redis
+      - prometheus
+      - grafana
+    environment:
+      - REDIS_HOST=dgla-redis
+      - REDIS_PORT=6379
+      - PROMETHEUS_URL=http://dgla-prometheus:9090
+      - GRAFANA_URL=http://dgla-grafana:3000
+    command: python dgla_adapter.py
+
+# Use the already deployed infrastructure
+networks:
+  dgla-network:
+    external:
+      name: data-governance-pipeline_dgla-network

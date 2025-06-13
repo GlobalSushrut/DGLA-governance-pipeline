@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DGLA Secure Infrastructure - Rogers Demo</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('index') }}">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="DGLA" width="40" class="d-inline-block align-text-middle me-2">
+                DGLA Secure Infrastructure
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{{ url_for('index') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('setup') }}">Setup</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('mesh') }}">Mesh Network</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('registry') }}">Docker Registry</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('deploy') }}">Deploy</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('nanobond') }}">NanoBond Ledger</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('kubernetes_status') }}">Kubernetes</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h2 class="m-0">DGLA Military-Grade Secure Infrastructure</h2>
+            </div>
+            <div class="card-body">
+                <h3>Welcome to the Rogers Demo</h3>
+                <p class="lead">This demo showcases DGLA's revolutionary secure infrastructure with NanoBond™ technology - a solution 100x more efficient than blockchain while maintaining military-grade security.</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h4>Key Features</h4>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Secure Docker Registry
+                                <span class="badge bg-primary rounded-pill">Active</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                NanoBond™ Ledger Technology
+                                <span class="badge bg-success rounded-pill">100x More Efficient</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Immutable Image Verification
+                                <span class="badge bg-primary rounded-pill">Military Grade</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Secure Mesh Network
+                                <span class="badge bg-primary rounded-pill">Active</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Kubernetes Integration
+                                <span class="badge bg-primary rounded-pill">Active</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h4>System Status</h4>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Registry Status:</span>
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Online</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>NanoBond™ Ledger:</span>
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Active</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Mesh Network:</span>
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Connected</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Kubernetes Clusters:</span>
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> Ready</span>
+                                </div>
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span>Security Level:</span>
+                                    <span class="text-primary"><i class="fas fa-shield-alt"></i> Military Grade</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="{{ url_for('setup') }}" class="btn btn-primary btn-lg">Start Demo</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="m-0">NanoBond™ Ledger</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Our revolutionary ledger technology provides immutable verification with 100x more efficiency than blockchain.</p>
+                        <a href="{{ url_for('nanobond') }}" class="btn btn-outline-success">View Ledger</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="m-0">Secure Registry</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Our self-hosted Docker registry with military-grade security and immutability enforcement.</p>
+                        <a href="{{ url_for('registry') }}" class="btn btn-outline-info">View Registry</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="m-0">Mesh Network</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Secure mesh network connecting all components with end-to-end encryption and verification.</p>
+                        <a href="{{ url_for('mesh') }}" class="btn btn-outline-warning">View Network</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-auto py-3 bg-light">
+        <div class="container">
+            <span class="text-muted">© 2025 DGLA Secure Infrastructure - Rogers Demo</span>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sla-config
+  namespace: rogers-5g-production
+data:
+  sla-definitions.json: |
+    {
+      "service_levels": [
+        {
+          "name": "platinum",
+          "uptime_guarantee": 99.99,
+          "response_time_ms": 100,
+          "data_sovereignty_guarantee": true,
+          "compliance_reports": "daily",
+          "support_response_minutes": 15,
+          "penalties": {
+            "uptime_violation": "10% monthly fee per 0.1% below guarantee",
+            "data_breach": "100% monthly fee + remediation costs"
+          }
+        },
+        {
+          "name": "gold",
+          "uptime_guarantee": 99.9,
+          "response_time_ms": 250,
+          "data_sovereignty_guarantee": true,
+          "compliance_reports": "weekly",
+          "support_response_minutes": 60,
+          "penalties": {
+            "uptime_violation": "5% monthly fee per 0.1% below guarantee",
+            "data_breach": "50% monthly fee + remediation costs"
+          }
+        },
+        {
+          "name": "silver",
+          "uptime_guarantee": 99.5,
+          "response_time_ms": 500,
+          "data_sovereignty_guarantee": true,
+          "compliance_reports": "monthly",
+          "support_response_minutes": 240,
+          "penalties": {
+            "uptime_violation": "2% monthly fee per 0.1% below guarantee",
+            "data_breach": "25% monthly fee + remediation costs"
+          }
+        }
+      ],
+      "measurement_rules": {
+        "uptime_calculation": "percentage_of_successful_api_responses_per_month",
+        "response_time_calculation": "95th_percentile_over_24h_period",
+        "exclusions": [
+          "scheduled_maintenance",
+          "force_majeure_events",
+          "customer_network_issues"
+        ]
+      }
+    }
+  
+  alert-to-sla-mapping.yaml: |
+    mappings:
+      - alert: HighMemoryUsage
+        sla_impacts:
+          - service_level: all
+            metric: potential_degradation
+            severity: warning
+      
+      - alert: HighCpuUsage
+        sla_impacts:
+          - service_level: all
+            metric: potential_degradation
+            severity: warning
+      
+      - alert: PodCrashLooping
+        sla_impacts:
+          - service_level: all
+            metric: uptime_violation
+            severity: critical
+      
+      - alert: MongoDbDown
+        sla_impacts:
+          - service_level: all
+            metric: uptime_violation
+            severity: critical
+      
+      - alert: CdnHighLatency
+        sla_impacts:
+          - service_level: platinum
+            metric: response_time_violation
+            severity: critical
+          - service_level: gold
+            metric: response_time_violation
+            severity: warning
+          - service_level: silver
+            metric: response_time_violation
+            severity: info

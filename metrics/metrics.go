@@ -27,6 +27,25 @@ type Metrics struct {
 	// Merkle tree metrics
 	merkleTreeTime    prometheus.Histogram
 	
+	// ZK Packet verification metrics
+	packetVerifications    *prometheus.CounterVec
+	packetVerificationTime *prometheus.HistogramVec
+	invalidPackets         *prometheus.CounterVec
+	
+	// ChainLog metrics
+	chainLogAppends        prometheus.Counter
+	chainLogAnchors        *prometheus.CounterVec
+	anchoringTime          *prometheus.HistogramVec
+	
+	// Audit Export metrics
+	auditExports           *prometheus.CounterVec
+	exportTime             *prometheus.HistogramVec
+	exportSize             *prometheus.HistogramVec
+	
+	// Rate limiting metrics
+	apiRateLimit           *prometheus.CounterVec
+	apiRateExceeded        *prometheus.CounterVec
+	
 	registry          *prometheus.Registry
 	mutex             sync.Mutex
 }
@@ -97,6 +116,101 @@ func NewMetrics() *Metrics {
 		},
 	)
 	
+	// ZK Packet verification metrics
+	packetVerifications := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_packet_verifications_total",
+			Help: "Total number of packet verifications.",
+		},
+		[]string{"algorithm", "status"},
+	)
+	
+	packetVerificationTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "dgla_packet_verification_seconds",
+			Help:    "Time taken to verify packets.",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"algorithm"},
+	)
+	
+	invalidPackets := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_invalid_packets_total",
+			Help: "Total number of invalid packets detected.",
+		},
+		[]string{"reason", "algorithm"},
+	)
+	
+	// ChainLog metrics
+	chainLogAppends := prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "dgla_chainlog_appends_total",
+			Help: "Total number of ChainLog append operations.",
+		},
+	)
+	
+	chainLogAnchors := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_chainlog_anchors_total",
+			Help: "Total number of ChainLog anchor operations.",
+		},
+		[]string{"target"},
+	)
+	
+	anchoringTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "dgla_anchoring_seconds",
+			Help:    "Time taken to anchor ChainLog roots.",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"target"},
+	)
+	
+	// Audit Export metrics
+	auditExports := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_audit_exports_total",
+			Help: "Total number of audit log exports.",
+		},
+		[]string{"format"},
+	)
+	
+	exportTime := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "dgla_export_seconds",
+			Help:    "Time taken to export audit logs.",
+			Buckets: prometheus.DefBuckets,
+		},
+		[]string{"format"},
+	)
+	
+	exportSize := prometheus.NewHistogramVec(
+		prometheus.HistogramOpts{
+			Name:    "dgla_export_size_bytes",
+			Help:    "Size of exported audit logs in bytes.",
+			Buckets: []float64{1024, 10*1024, 100*1024, 1024*1024, 10*1024*1024},
+		},
+		[]string{"format"},
+	)
+	
+	// Rate limiting metrics
+	apiRateLimit := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_rate_limit_checks_total",
+			Help: "Total number of rate limit checks.",
+		},
+		[]string{"endpoint"},
+	)
+	
+	apiRateExceeded := prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "dgla_rate_limit_exceeded_total",
+			Help: "Total number of rate limit exceeded events.",
+		},
+		[]string{"endpoint", "client_ip"},
+	)
+	
 	// Register all metrics
 	registry.MustRegister(
 		requestCount,
@@ -107,6 +221,17 @@ func NewMetrics() *Metrics {
 		ruleEvaluations,
 		ruleViolations,
 		merkleTreeTime,
+		packetVerifications,
+		packetVerificationTime,
+		invalidPackets,
+		chainLogAppends,
+		chainLogAnchors,
+		anchoringTime,
+		auditExports,
+		exportTime,
+		exportSize,
+		apiRateLimit,
+		apiRateExceeded,
 	)
 	
 	return &Metrics{
@@ -118,6 +243,26 @@ func NewMetrics() *Metrics {
 		ruleEvaluations:  ruleEvaluations,
 		ruleViolations:   ruleViolations,
 		merkleTreeTime:   merkleTreeTime,
+		
+		// ZK Packet verification metrics
+		packetVerifications:    packetVerifications,
+		packetVerificationTime: packetVerificationTime,
+		invalidPackets:         invalidPackets,
+		
+		// ChainLog metrics
+		chainLogAppends:        chainLogAppends,
+		chainLogAnchors:        chainLogAnchors,
+		anchoringTime:          anchoringTime,
+		
+		// Audit Export metrics
+		auditExports:           auditExports,
+		exportTime:             exportTime,
+		exportSize:             exportSize,
+		
+		// Rate limiting metrics
+		apiRateLimit:           apiRateLimit,
+		apiRateExceeded:        apiRateExceeded,
+		
 		registry:         registry,
 	}
 }
@@ -166,6 +311,61 @@ func (m *Metrics) RecordRuleViolation(ruleID string) {
 // RecordMerkleTreeTime records the time taken to create a Merkle tree
 func (m *Metrics) RecordMerkleTreeTime(duration time.Duration) {
 	m.merkleTreeTime.Observe(duration.Seconds())
+}
+
+// RecordPacketVerification records a packet verification
+func (m *Metrics) RecordPacketVerification(algorithm, status string) {
+	m.packetVerifications.WithLabelValues(algorithm, status).Inc()
+}
+
+// RecordPacketVerificationTime records the time taken to verify a packet
+func (m *Metrics) RecordPacketVerificationTime(algorithm string, duration time.Duration) {
+	m.packetVerificationTime.WithLabelValues(algorithm).Observe(duration.Seconds())
+}
+
+// RecordInvalidPacket records an invalid packet detection
+func (m *Metrics) RecordInvalidPacket(reason, algorithm string) {
+	m.invalidPackets.WithLabelValues(reason, algorithm).Inc()
+}
+
+// RecordChainLogAppend records a ChainLog append
+func (m *Metrics) RecordChainLogAppend() {
+	m.chainLogAppends.Inc()
+}
+
+// RecordChainLogAnchor records a ChainLog anchor
+func (m *Metrics) RecordChainLogAnchor(target string) {
+	m.chainLogAnchors.WithLabelValues(target).Inc()
+}
+
+// RecordAnchoringTime records the time taken to anchor a ChainLog root
+func (m *Metrics) RecordAnchoringTime(target string, duration time.Duration) {
+	m.anchoringTime.WithLabelValues(target).Observe(duration.Seconds())
+}
+
+// RecordAuditExport records an audit log export
+func (m *Metrics) RecordAuditExport(format string) {
+	m.auditExports.WithLabelValues(format).Inc()
+}
+
+// RecordExportTime records the time taken to export audit logs
+func (m *Metrics) RecordExportTime(format string, duration time.Duration) {
+	m.exportTime.WithLabelValues(format).Observe(duration.Seconds())
+}
+
+// RecordExportSize records the size of exported audit logs
+func (m *Metrics) RecordExportSize(format string, sizeBytes float64) {
+	m.exportSize.WithLabelValues(format).Observe(sizeBytes)
+}
+
+// RecordRateLimitCheck records a rate limit check
+func (m *Metrics) RecordRateLimitCheck(endpoint string) {
+	m.apiRateLimit.WithLabelValues(endpoint).Inc()
+}
+
+// RecordRateLimitExceeded records a rate limit exceeded event
+func (m *Metrics) RecordRateLimitExceeded(endpoint, clientIP string) {
+	m.apiRateExceeded.WithLabelValues(endpoint, clientIP).Inc()
 }
 
 // MetricsMiddleware adds metrics collection to HTTP handlers

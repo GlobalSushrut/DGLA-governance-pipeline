@@ -1,0 +1,63 @@
+rule_id: GDPR_EU_DATA_PROTECTION
+version: "1.0"
+description: "General Data Protection Regulation (EU) compliance rule set"
+owner: "dgla_system"
+created_at: "2025-06-01T00:00:00Z"
+updated_at: "2025-06-11T00:00:00Z"
+signature: "e582f254974f0fd790576e57a482ab4c89f2941db9986d410a16e8a699117b7e"
+
+rules:
+  - rule_id: GDPR_DATA_RESIDENCY
+    version: "1.0"
+    conditions:
+      if: "data.region == 'EU' and data.is_pii == true"
+    actions:
+      - ensure: "destination.region in ['EU', 'EEA']"
+    violation_response:
+      block_transfer: true
+      alert: "DataPrivacyTeam"
+      log_level: "ERROR"
+      message: "EU PII data must remain within EU/EEA regions"
+  
+  - rule_id: GDPR_DATA_MINIMIZATION
+    version: "1.0"
+    conditions:
+      if: "data.is_pii == true"
+    actions:
+      - ensure: "data.metadata.purpose != null and data.metadata.purpose != ''"
+      - ensure: "data.metadata.retention_period != null"
+    violation_response:
+      block_transfer: true
+      alert: "DataPrivacyTeam"
+      log_level: "ERROR"
+      message: "GDPR requires purpose specification and retention period for PII data"
+
+  - rule_id: GDPR_RIGHT_TO_BE_FORGOTTEN
+    version: "1.0"
+    conditions:
+      if: "data.action == 'delete' and data.metadata.request_type == 'user_deletion'"
+    actions:
+      - ensure: "destination.deletion_confirmation == true"
+      - notify: "data.metadata.user_email"
+    violation_response:
+      block_transfer: false
+      alert: "DataPrivacyTeam"
+      log_level: "WARNING"
+      message: "User deletion request must be confirmed by destination system"
+
+  - rule_id: GDPR_DATA_BREACH_NOTIFICATION
+    version: "1.0"
+    conditions:
+      if: "data.metadata.event_type == 'data_breach'"
+    actions:
+      - notify: "data.metadata.dpo_email"
+      - notify: "security@company.com"
+    violation_response:
+      block_transfer: false
+      alert: "SecurityTeam"
+      log_level: "CRITICAL"
+      message: "Data breach notification required within 72 hours"
+
+# This rule template is signed with rule_owner_key
+rule_owner_key_id: "dgla-system-key-2025"
+rule_owner_signature: "a72e1b9e067e8877c39e778a964c6f49adb22cfe9f73d9eabbf12f71286ce7f323dab5ed8c7ca5fb7ab8d969e7236da4"

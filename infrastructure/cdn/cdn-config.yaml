@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cdn-config
+  namespace: rogers-5g-production
+data:
+  origin_server: "http://dgla-api-service:8080"
+  cache_ttl: "3600"
+  cdn_regions: |
+    - name: us-east
+      url: cdn-us-east.dgla.io
+    - name: us-west
+      url: cdn-us-west.dgla.io
+    - name: eu-west
+      url: cdn-eu-west.dgla.io
+    - name: asia-east
+      url: cdn-asia-east.dgla.io

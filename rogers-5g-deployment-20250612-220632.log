@@ -1,0 +1,37 @@
+
+[1;33mVerifying prerequisites...[0m
+
+[1;33mVerifying Python dependencies...[0m
+
+[1;33mVerifying DGLA CLI...[0m
+
+[1;33mVerifying Rogers 5G module integration...[0m
+[0;32m✓ Rogers 5G module available[0m
+
+[1;33mInitializing DGLA CLI with production configuration...[0m
+[2025-06-12 22:06:38] INFO: Initializing DGLA environment...
+[2025-06-12 22:06:38] INFO: DGLA initialized with namespace: rogers-5g-production, environment: production
+[2025-06-12 22:06:38] INFO: Run 'dgla deploy' to deploy the system components
+[0;32m✓ DGLA CLI initialized with production settings[0m
+
+[1;33mConfiguring Rogers 5G Security System...[0m
+Configuration generated at /home/umesh/.dgla/rogers-5g-config.yaml
+[0;32m✓ Rogers 5G Security System configured[0m
+
+[1;33mDeploying core DGLA infrastructure...[0m
+[2025-06-12 22:06:38] INFO: Deploying mongodb...
+[2025-06-12 22:06:40] INFO: Deploying monitoring...
+[2025-06-12 22:06:42] INFO: Deploying alerting...
+[2025-06-12 22:06:42] INFO: Deploying sla...
+Traceback (most recent call last):
+  File "./cli/dgla.py", line 404, in <module>
+    DglaCLI().main()
+  File "./cli/dgla.py", line 389, in main
+    self.deploy(args)
+  File "./cli/dgla.py", line 160, in deploy
+    run_cmd(f"kubectl apply -f {self.infra_dir}/alerting/custom-sla-config.yaml -n {namespace}")
+  File "./cli/dgla.py", line 19, in run_cmd
+    return subprocess.run(cmd, shell=True, check=check, text=True, 
+  File "/usr/lib/python3.8/subprocess.py", line 516, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command 'kubectl apply -f /home/umesh/Documents/DGLA_progects/data-governance-pipeline/infrastructure/alerting/custom-sla-config.yaml -n rogers-5g-production' returned non-zero exit status 1.

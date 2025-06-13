@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dgla-config
+  namespace: dgla
+data:
+  config.json: |
+    {
+      "server": {
+        "port": 8081,
+        "read_timeout_seconds": 30,
+        "write_timeout_seconds": 30,
+        "idle_timeout_seconds": 60
+      },
+      "logging": {
+        "level": "info",
+        "format": "json",
+        "output": "stdout"
+      },
+      "auth": {
+        "enabled": true,
+        "jwt_expiry_minutes": 60
+      },
+      "monitoring": {
+        "metrics_enabled": true,
+        "health_check_interval_seconds": 60
+      },
+      "cache": {
+        "type": "redis",
+        "ttl_seconds": 300
+      }
+    }
